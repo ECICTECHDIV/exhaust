@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>染色能耗計算工具</title>
+
+<!-- PWA：可安裝到手機主畫面／電腦桌面，像 App 一樣使用 -->
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#C4384F">
+<meta name="robots" content="noindex, nofollow">
+<!-- iOS 專屬（iOS 不吃 manifest.json，要靠這幾個 meta/link 才能「加入主畫面」） -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="染色能耗計算工具">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+
+<style>
+  :root{
+    --bg: #F7F6F3;
+    --surface: #FFFFFF;
+    --surface-alt: #F7F6F3;
+    --border: #E3E1DC;
+    --border-strong: #C9C6BF;
+    --ink: #1C1B19;
+    --ink-soft: #6B6862;
+    --ink-faint: #A6A29A;
+    --brand: #C4384F;
+    --brand-dark: #9E2D40;
+    --brand-tint: #FBEAED;
+    --amber: #D97B2B;
+    --amber-tint: #FBEFDF;
+    --danger: #C8331F;
+    --danger-tint: #FBEAE7;
+    --good: #276749;
+    --good-tint: #E9F5EE;
+    --radius: 14px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --font-num: "IBM Plex Mono", "Source Code Pro", ui-monospace, monospace;
+    font-size: 17px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family: "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
+    line-height:1.5;
+    padding-bottom:64px;
+  }
+  .shell{max-width:760px;margin:0 auto;padding:0 16px;}
+
+  header.top{
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:20px 16px;
+  }
+  header.top .head-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    max-width:760px;
+    margin:0 auto;
+  }
+  header.top .head-accent-bar{
+    flex:0 0 auto;
+    align-self:stretch;
+    width:4px;
+    min-height:44px;
+    background:var(--brand);
+    border-radius:2px;
+  }
+  header.top .head-titles{flex:1 1 auto;min-width:0;}
+  header.top h1{
+    margin:0;
+    font-size:1.4rem;
+    font-weight:800;
+    letter-spacing:-.01em;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  @media (max-width:480px){
+    header.top h1{font-size:1.05rem;}
+  }
+  header.top .head-actions{
+    display:flex;
+    gap:8px;
+    flex-shrink:0;
+  }
+  header.top .head-actions button{
+    appearance:none;
+    border:1px solid var(--border-strong);
+    background:var(--surface);
+    color:var(--ink-soft);
+    min-width:34px;
+    height:34px;
+    padding:0 8px;
+    border-radius:999px;
+    font-size:.76rem;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  header.top .head-actions button svg{width:17px;height:17px;}
+  header.top .head-actions button:active{background:var(--bg);}
+  .lang-seg-wrap{
+    display:inline-flex;
+    border-radius:999px;
+    overflow:hidden;
+    border:1.5px solid var(--brand);
+    flex-shrink:0;
+  }
+  header.top .head-actions .lang-seg-wrap .lang-seg-btn{
+    padding:7px 14px;
+    font-size:.78rem;
+    font-weight:700;
+    background:var(--surface);
+    color:var(--brand);
+    border:none;
+    border-radius:0;
+    cursor:pointer;
+  }
+  .top-bar-slim{
+    padding:14px 16px 4px;
+  }
+  .top-bar-slim .shell{
+    padding:12px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+  }
+  .top-bar-slim-row{
+    display:flex;
+    gap:8px;
+  }
+  .top-bar-slim select, .top-bar-slim input[type=text]{
+    flex:1 1 auto;
+    min-width:0;
+    padding:9px 10px;
+    font-size:.9rem;
+    border:1px solid var(--border-strong);
+    border-radius:var(--radius-sm);
+    background:#fff;
+  }
+  .top-bar-slim .btn-sm{
+    flex:0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:9px 12px;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--brand);
+    background:var(--brand);
+    color:#fff;
+    cursor:pointer;
+  }
+  .top-bar-slim .btn-sm svg{width:18px;height:18px;flex-shrink:0;}
+  .top-bar-slim .btn-sm.danger{
+    border-color:var(--danger);
+    background:var(--danger);
+    color:#fff;
+  }
+  header.top .head-actions .lang-seg-wrap .lang-seg-btn + .lang-seg-btn{border-left:1.5px solid var(--brand);}
+  header.top .head-actions .lang-seg-wrap .lang-seg-btn.active{background:var(--brand);color:#fff;}
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    max-width:760px;
+    margin:0 auto;
+    padding:0 8px;
+    overflow-x:auto;
+    position:sticky;
+    top:0;
+    z-index:41;
+    background:rgba(255,255,255,.98);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  nav.tabs button{
+    flex:1 0 auto;
+    appearance:none;
+    border:none;
+    border-bottom:3px solid transparent;
+    background:none;
+    color:var(--ink-soft);
+    padding:10px 4px 9px;
+    font-size:.78rem;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  nav.tabs button.active{
+    background:none;
+    color:var(--brand);
+    border-bottom-color:var(--brand);
+  }
+  nav.tabs .tab-icon{width:19px;height:19px;display:block;}
+  nav.tabs .tab-icon svg{width:100%;height:100%;display:block;}
+
+  main{padding:16px;}
+  main.shell{padding-top:16px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 18px 20px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    margin:0 0 2px;
+    font-size:1.08rem;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .card .sub{
+    margin:0 0 16px;
+    color:var(--ink-soft);
+    font-size:.88rem;
+  }
+
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:.86rem;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  /* 同一排欄位標籤保留兩行高度，避免其中一個標籤換行時、跟旁邊沒換行的欄位輸入框對不齊 */
+  .row2 .field label, .row3 .field label{
+    min-height:2.6em;
+    display:flex;
+    align-items:flex-end;
+  }
+  @media (max-width:480px){
+    .row3{grid-template-columns:1fr 1fr;}
+  }
+
+  input[type=number], input[type=text], select, textarea{
+    width:100%;
+    font-size:1.05rem;
+    font-weight:500;
+    padding:10px 12px;
+    border:1px solid var(--border-strong);
+    border-radius:var(--radius-sm);
+    background:var(--surface);
+    color:var(--ink);
+    font-family:inherit;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type=number]{font-family:var(--font-num);}
+  input:focus, select:focus, textarea:focus{
+    outline:none;
+    border-color:var(--brand);
+    box-shadow:0 0 0 3px var(--brand-tint);
+    background:#fff;
+  }
+
+  .btn{
+    display:inline-block;
+    background:var(--brand);
+    color:#fff;
+    border:none;
+    padding:12px 20px;
+    border-radius:var(--radius-sm);
+    font-size:1rem;
+    font-weight:700;
+    cursor:pointer;
+    width:100%;
+  }
+  .btn.secondary{
+    background:var(--surface);
+    color:var(--brand);
+    border:1px solid var(--brand);
+  }
+  .add-row-btn{
+    background:none;
+    border:none;
+    color:var(--brand);
+    font-weight:600;
+    font-size:.85rem;
+    cursor:pointer;
+    padding:4px 10px;
+  }
+  .add-row-btn:active{text-decoration:underline;}
+  .clear-link{
+    font-size:.82rem;
+    color:var(--ink-soft);
+    font-weight:600;
+    cursor:pointer;
+    background:none;
+    border:none;
+    padding:4px 2px;
+    text-decoration:underline;
+  }
+
+  /* ---- 染程設定：製程卡片 ---- */
+  .process-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    margin-bottom:16px;
+    overflow:hidden;
+  }
+  .process-card-header{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:14px 16px;
+    cursor:pointer;
+    background:var(--surface-alt);
+  }
+  .process-card-header input[type=text]{
+    flex:1 1 auto;
+    font-weight:700;
+    border:none;
+    background:none;
+    padding:4px 2px;
+  }
+  .process-card-header input[type=text]:focus{box-shadow:none;border-bottom:2px solid var(--brand);border-radius:0;}
+  .process-card-chevron{
+    flex:0 0 auto;
+    color:var(--ink-soft);
+    transition:transform .2s;
+  }
+  .process-card-header.open .process-card-chevron{transform:rotate(180deg);}
+  .process-card-body{padding:16px;display:none;}
+  .process-card-delete{
+    flex:0 0 auto;
+    width:30px;height:30px;
+    border-radius:50%;
+    border:none;
+    background:var(--danger-tint);
+    color:var(--danger);
+    font-size:1rem;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .grp-title{
+    font-size:.88rem;
+    font-weight:700;
+    color:var(--ink);
+    margin:18px 0 8px;
+    padding-bottom:4px;
+    border-bottom:2px solid var(--brand-tint);
+  }
+  .grp-title:first-child{margin-top:0;}
+
+  .stage-row{
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:10px;
+    margin-bottom:10px;
+    background:var(--surface-alt);
+  }
+  .stage-row .stage-row-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .stage-row .stage-row-top select{
+    flex:1 1 auto;
+    margin-right:8px;
+    font-size:.9rem;
+    padding:7px 8px;
+  }
+  .stage-row-del{
+    flex:0 0 auto;
+    width:26px;height:26px;
+    border-radius:50%;
+    border:none;
+    background:var(--danger-tint);
+    color:var(--danger);
+    font-weight:700;
+    cursor:pointer;
+    line-height:1;
+  }
+  .stage-row-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+  }
+  .stage-row-grid label{
+    font-size:.74rem;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin-bottom:3px;
+    display:block;
+  }
+  .stage-row-grid input{
+    font-size:.92rem;
+    padding:8px;
+  }
+
+  .result-num-box{
+    background:var(--surface-alt);
+    border-radius:var(--radius-sm);
+    padding:12px 14px;
+  }
+  .result-num-box .k{font-size:.8rem;color:var(--ink-soft);font-weight:600;margin-bottom:4px;}
+  .result-num-box .v{font-size:1.3rem;font-weight:700;font-family:var(--font-num);color:var(--ink);}
+  .result-num-box .v small{font-size:.75rem;font-weight:600;color:var(--ink-soft);}
+  .result-num-box .perkg{font-size:.74rem;color:var(--ink-faint);margin-top:2px;font-family:var(--font-num);}
+
+  .result-data-table{width:100%;border-collapse:collapse;font-size:.86rem;}
+  .result-data-table th{
+    padding:8px 4px;
+    font-size:.72rem;
+    font-weight:700;
+    color:var(--ink-soft);
+    text-align:center;
+    border-bottom:1px solid var(--border);
+  }
+  .result-data-table th:first-child{text-align:left;}
+  .result-data-table td{
+    padding:9px 4px;
+    text-align:center;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  .result-data-table td:first-child{
+    text-align:left;
+    font-weight:600;
+    color:var(--ink-soft);
+    white-space:normal;
+  }
+  .result-data-table tr:last-child td{border-bottom:none;}
+  .result-data-table .rdv{font-family:var(--font-num);font-weight:700;color:var(--brand);font-size:1.02em;}
+  .result-data-table .rdu{color:var(--ink-faint);font-size:.82em;margin-left:2px;}
+
+  .results-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+    gap:16px;
+    align-items:start;
+  }
+  .result-card{margin-bottom:0;}
+  .method-text{
+    font-size:.92rem;
+    color:var(--ink-soft);
+    line-height:1.7;
+    margin:0 0 4px;
+  }
+
+  footer.app-footer{
+    text-align:center;
+    padding:20px 16px 8px;
+    color:var(--ink-soft);
+    font-size:.8rem;
+  }
+  .app-version{
+    margin-top:6px;
+    font-size:.72rem;
+    color:var(--ink-faint);
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="head-row">
+    <span class="head-accent-bar"></span>
+    <div class="head-titles">
+      <h1 data-i18n="appTitle">染色能耗計算工具</h1>
+    </div>
+    <div class="head-actions">
+      <div class="lang-seg-wrap">
+        <button type="button" id="langBtnZh" class="lang-seg-btn active" onclick="setLanguage('zh')">中</button>
+        <button type="button" id="langBtnEn" class="lang-seg-btn" onclick="setLanguage('en')">EN</button>
+      </div>
+      <button type="button" id="shareBtn" onclick="shareToolUrl()" title="分享">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="top-bar-slim no-print">
+  <div class="shell">
+    <div class="top-bar-slim-row">
+      <select id="savedSetsSel" onchange="loadProcessSet()">
+        <option value="" data-i18n="selectSetOpt">-- 選擇已儲存的製程組 --</option>
+      </select>
+      <button type="button" class="btn-sm danger" onclick="deleteProcessSet()" title="刪除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>
+    <div class="top-bar-slim-row">
+      <input type="text" id="setNameInput" data-i18n-placeholder="setNamePh" placeholder="輸入製程組名稱">
+      <button type="button" class="btn-sm" onclick="saveProcessSet()" title="儲存">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="settings">
+    <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+    <span data-i18n="tabSettings">自定義</span>
+  </button>
+  <button class="tab-btn" data-tab="process">
+    <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l4-8 5 3 5-9 4 6"/></svg></span>
+    <span data-i18n="tabProcess">染程設定</span>
+  </button>
+  <button class="tab-btn" data-tab="results">
+    <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-4-4L3 15.4"/></svg></span>
+    <span data-i18n="tabResults">計算結果</span>
+  </button>
+  <button class="tab-btn" data-tab="methods">
+    <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 2-3 4M12 17h.01"/></svg></span>
+    <span data-i18n="tabMethods">計算方式</span>
+  </button>
+</nav>
+
+<main class="shell">
+
+  <section class="panel active" id="panel-settings">
+    <div class="card">
+      <h2 data-i18n="customSettingsTitle">自定義設定</h2>
+      <p class="sub" data-i18n="customSettingsSub">物理常數，一般不需調整；有特殊現場條件才需要修改</p>
+
+      <div class="row2">
+        <div class="field">
+          <label data-i18n="waterHeatCapacityLabel">水的比熱 (kJ/(kg·°C))</label>
+          <input type="number" id="s_waterHeatCapacity" value="4.186" step="0.001">
+        </div>
+        <div class="field">
+          <label data-i18n="boilerEfficiencyLabel">鍋爐效率 (0-1)</label>
+          <input type="number" id="s_boilerEfficiency" value="0.8" step="0.01" min="0.01" max="1">
+        </div>
+        <div class="field">
+          <label data-i18n="steamLatentHeatLabel">蒸汽潛熱 (kJ/kg)</label>
+          <input type="number" id="s_steamLatentHeat" value="2257" step="1">
+        </div>
+        <div class="field">
+          <label data-i18n="electricityEmissionLabel">電力排放係數 (kg CO₂/kWh)</label>
+          <input type="number" id="s_electricityEmissionFactor" value="0.5" step="0.001">
+        </div>
+        <div class="field">
+          <label data-i18n="waterInOutTimeLabel">進出水時間 (分鐘)</label>
+          <input type="number" id="s_waterInOutTime" value="5" step="1" min="0">
+        </div>
+        <div class="field">
+          <label data-i18n="tempMaintainFactorLabel">保溫耗損係數</label>
+          <input type="number" id="s_temperatureMaintainFactor" value="0.005" step="0.001">
+        </div>
+        <div class="field">
+          <label data-i18n="heatLossFactorLabel">熱損耗係數 (0-1)</label>
+          <input type="number" id="s_heatLossFactor" value="0.1" step="0.01" min="0" max="0.9">
+        </div>
+        <div class="field">
+          <label data-i18n="residualWaterFactorLabel">殘留水量係數</label>
+          <input type="number" id="s_residualWaterFactor" value="2" step="0.1" min="0">
+        </div>
+      </div>
+
+      <button type="button" class="add-row-btn" id="resetSettingsBtn" data-i18n="resetDefaultsBtn">重設為預設值</button>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-process">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="margin:0;font-size:1.1rem;" data-i18n="processSettingsTitle">染程設定</h2>
+      <button type="button" class="clear-link" id="clearProcessBtn" data-i18n="clearBtn">清除</button>
+    </div>
+    <div id="processList"></div>
+    <button type="button" class="btn" id="addProcessBtn" data-i18n="addProcessBtn">＋ 新增製程</button>
+  </section>
+
+  <section class="panel" id="panel-results">
+    <div class="card">
+      <h2 data-i18n="resultsTitle">計算結果</h2>
+      <button type="button" class="btn" id="calcBtn" data-i18n="calcBtn">計算 / 更新結果</button>
+    </div>
+    <div id="resultsOutput"></div>
+  </section>
+
+  <section class="panel" id="panel-methods">
+    <div class="card">
+      <h2 data-i18n="methodsTitle">計算方式說明</h2>
+
+      <div class="grp-title" data-i18n="m_waterTitle">用水量</div>
+      <p class="method-text" data-i18n="m_waterText">總用水量 = 起始浴液量（布重 × 浴比）+ 每次水洗的補水量 + 每次「排液」重新加水的補水量。補水量會先扣掉殘留在布料上、不用重新補的水量（殘留水量係數 × 布重），所以補水量 = max(0, 浴液量 − 殘留水量)。</p>
+
+      <div class="grp-title" data-i18n="m_thermalTitle">熱能</div>
+      <p class="method-text" data-i18n="m_thermalText">每一段（染色階段或水洗步驟）所需熱能 = 加熱能量 + 保溫耗損能量。加熱能量 = 浴液量 × 水的比熱 × 溫差（跟時間快慢無關，單純看溫差）；保溫耗損能量 = 浴液量 × 水的比熱 × 保溫耗損係數 × 保溫時間。全部段落加總後，再除以（1 − 熱損耗係數）反映管路/槽體散失，最後單位從 kJ 換算成 kWh。</p>
+
+      <div class="grp-title" data-i18n="m_timeTitle">總製程時間</div>
+      <p class="method-text" data-i18n="m_timeText">每段時間 = 爬升分鐘 + 保溫分鐘；有勾選「排液」的階段，額外加一次進出水時間。水洗每次开始前也各加一次進出水時間，整體再加一次起始進出水時間。</p>
+
+      <div class="grp-title" data-i18n="m_electricityTitle">電力消耗</div>
+      <p class="method-text" data-i18n="m_electricityText">電力消耗 = 機台功率 × 總製程時間（換算成小時）。</p>
+
+      <div class="grp-title" data-i18n="m_steamTitle">蒸汽與燃料消耗</div>
+      <p class="method-text" data-i18n="m_steamText">蒸汽消耗由總熱能反推：蒸汽消耗 = 總熱能 × 3600 ÷（蒸汽潛熱 × 鍋爐效率）。燃料消耗再由蒸汽消耗反推：燃料消耗 = （蒸汽消耗 × 蒸汽潛熱）÷（熱源熱值 × 鍋爐效率）。不同熱源（煤／重油／天然氣）的熱值與排放係數已內建，選了熱源會自動代入對應數值。</p>
+
+      <div class="grp-title" data-i18n="m_carbonTitle">CO₂排放</div>
+      <p class="method-text" data-i18n="m_carbonText">CO₂排放 = 熱源燃燒排放（燃料消耗 × 熱源排放係數）+ 用電排放（電力消耗 × 電力排放係數）。</p>
+
+      <div class="grp-title" data-i18n="m_drainTitle">「排液」的意義</div>
+      <p class="method-text" data-i18n="m_drainText">染色階段勾選「排液」，代表這一段結束後會把缸內的水排掉、重新加水到初溫，才進入下一階段——下一階段的起始溫度會是「初溫」，不是接續這一段的溫度；同時會多算一次補水量跟一次進出水時間。不勾排液，下一階段就直接從這一段的溫度繼續加溫或降溫，中間不重新加水。</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <div class="app-version">v2026.09.12</div>
+</footer>
+
+<script>
+const TRANSLATIONS = {
+  zh: {
+    appTitle:"染色能耗計算工具",
+    tabSettings:"自定義", tabProcess:"染程設定", tabResults:"計算結果", tabMethods:"計算方式",
+    customSettingsTitle:"自定義設定", customSettingsSub:"物理常數，一般不需調整；有特殊現場條件才需要修改",
+    waterHeatCapacityLabel:"水的比熱 (kJ/(kg·°C))", boilerEfficiencyLabel:"鍋爐效率 (0-1)",
+    steamLatentHeatLabel:"蒸汽潛熱 (kJ/kg)", electricityEmissionLabel:"電力排放係數 (kg CO₂/kWh)",
+    waterInOutTimeLabel:"進出水時間 (分鐘)", tempMaintainFactorLabel:"保溫耗損係數",
+    heatLossFactorLabel:"熱損耗係數 (0-1)", residualWaterFactorLabel:"殘留水量係數",
+    resetDefaultsBtn:"重設為預設值", settingsResetMsg:"已重設為預設值",
+    processSettingsTitle:"染程設定",
+    addProcessBtn:"＋ 新增製程", clearBtn:"清除", selectSetOpt:"-- 選擇已儲存的製程組 --", setNamePh:"輸入製程組名稱",
+    fabricWeightLabel:"布重 (kg)", bathRatioLabel:"浴比", initialTempLabel:"初溫 (°C)", machinePowerLabel:"機台功率 (kW)",
+    heatSourceLabel:"熱源",
+    dyeingStagesTitle:"染色階段", addDyeStageBtn:"＋ 新增染色階段", drainLabel:"排液（下一階段視為重新加水到初溫）",
+    washStepsTitle:"水洗步驟", addWashBtn:"＋ 新增水洗",
+    targetTempLabel:"目標溫度(°C)", rampMinLabel:"爬升(分)", holdMinLabel:"保溫(分)",
+    resultsTitle:"計算結果", calcBtn:"計算 / 更新結果", chartTitle:"溫度-時間比較圖",
+    waterCompareTitle:"用水量比較（每公斤）", energyCompareTitle:"能耗與CO₂比較（每公斤）",
+    totalConsumptionCol:"總消耗量", perKgCol:"每公斤消耗量",
+    waterResultLabel:"總用水量", thermalResultLabel:"總熱能", electricityResultLabel:"電力消耗",
+    steamResultLabel:"蒸汽消耗", carbonResultLabel:"CO₂排放", timeResultLabel:"總製程時間",
+    methodsTitle:"計算方式說明"
+  },
+  en: {
+    appTitle:"Dyeing Energy Consumption Tool",
+    tabSettings:"Settings", tabProcess:"Process", tabResults:"Results", tabMethods:"Methods",
+    customSettingsTitle:"Custom Settings", customSettingsSub:"Physical constants — usually no need to adjust unless site conditions differ",
+    waterHeatCapacityLabel:"Water Heat Capacity (kJ/(kg·°C))", boilerEfficiencyLabel:"Boiler Efficiency (0-1)",
+    steamLatentHeatLabel:"Steam Latent Heat (kJ/kg)", electricityEmissionLabel:"Electricity Emission (kg CO₂/kWh)",
+    waterInOutTimeLabel:"Water In/Out Time (min)", tempMaintainFactorLabel:"Temp. Maintain Factor",
+    heatLossFactorLabel:"Heat Loss Factor (0-1)", residualWaterFactorLabel:"Residual Water Factor",
+    resetDefaultsBtn:"Reset to Defaults", settingsResetMsg:"Reset to defaults",
+    processSettingsTitle:"Process Settings",
+    addProcessBtn:"+ Add Process", clearBtn:"Clear", selectSetOpt:"-- Select a saved set --", setNamePh:"Enter set name",
+    fabricWeightLabel:"Fabric Weight (kg)", bathRatioLabel:"Liquor Ratio", initialTempLabel:"Initial Temp. (°C)", machinePowerLabel:"Machine Power (kW)",
+    heatSourceLabel:"Heat Source",
+    dyeingStagesTitle:"Dyeing Stages", addDyeStageBtn:"+ Add Dyeing Stage", drainLabel:"Drain (next stage refills water to initial temp)",
+    washStepsTitle:"Wash Steps", addWashBtn:"+ Add Wash",
+    targetTempLabel:"Target Temp.(°C)", rampMinLabel:"Ramp(min)", holdMinLabel:"Hold(min)",
+    resultsTitle:"Calculation Results", calcBtn:"Calculate / Update", chartTitle:"Temperature-Time Comparison",
+    waterCompareTitle:"Water Consumption Comparison (per kg)", energyCompareTitle:"Energy & CO₂ Comparison (per kg)",
+    totalConsumptionCol:"Total", perKgCol:"Per kg Fabric",
+    waterResultLabel:"Total Water", thermalResultLabel:"Total Thermal Energy", electricityResultLabel:"Electricity",
+    steamResultLabel:"Steam", carbonResultLabel:"CO₂ Emissions", timeResultLabel:"Total Time",
+    methodsTitle:"Calculation Methods",
+    m_waterTitle:"Water Consumption",
+    m_waterText:"Total water = initial bath volume (fabric weight × liquor ratio) + top-up water for each wash + top-up water for each dyeing-stage \"drain\". Top-up water is reduced by water already retained in the fabric (residual water factor × fabric weight), so top-up = max(0, bath volume − residual water).",
+    m_thermalTitle:"Thermal Energy",
+    m_thermalText:"Thermal energy for each stage (dyeing or washing) = heating energy + temperature-maintain loss. Heating energy = bath volume × water heat capacity × temperature difference (independent of how fast it's heated). Maintain loss = bath volume × water heat capacity × maintain factor × hold time. All stages are summed, then divided by (1 − heat loss factor) to account for losses from piping/tank, and converted from kJ to kWh.",
+    m_timeTitle:"Total Process Time",
+    m_timeText:"Each stage's time = ramp minutes + hold minutes. A stage with \"drain\" checked adds one extra water in/out time. Each wash step also adds a water in/out time before it starts, plus one overall water in/out time at the beginning.",
+    m_electricityTitle:"Electricity Consumption",
+    m_electricityText:"Electricity consumption = machine power × total process time (converted to hours).",
+    m_steamTitle:"Steam & Fuel Consumption",
+    m_steamText:"Steam consumption is derived from total thermal energy: steam = thermal energy × 3600 ÷ (steam latent heat × boiler efficiency). Fuel consumption is then derived from steam consumption: fuel = (steam × steam latent heat) ÷ (heat source's heating value × boiler efficiency). Heating values and emission factors for coal/heavy oil/natural gas are built in and applied automatically based on the selected heat source.",
+    m_carbonTitle:"CO₂ Emissions",
+    m_carbonText:"CO₂ emissions = heat source combustion emissions (fuel consumption × heat source emission factor) + electricity emissions (electricity consumption × electricity emission factor).",
+    m_drainTitle:"What \"Drain\" Means",
+    m_drainText:"Checking \"drain\" on a dyeing stage means the bath is drained and refilled to the initial temperature before the next stage begins — the next stage's starting temperature is the initial temperature, not a continuation of this stage's temperature. This also adds one extra top-up water amount and one extra water in/out time. Without \"drain\", the next stage continues heating or cooling directly from this stage's temperature, without refilling."
+  }
+};
+
+// 原始能耗計算機的預設物理常數，逐一對照搬過來，數值完全不變
+const DEFAULT_SETTINGS = {
+  waterHeatCapacity: 4.186,
+  boilerEfficiency: 0.8,
+  steamLatentHeat: 2257,
+  electricityEmissionFactor: 0.5,
+  waterInOutTime: 5,
+  temperatureMaintainFactor: 0.005,
+  heatLossFactor: 0.1,
+  residualWaterFactor: 2
+};
+
+function getSettings(){
+  return {
+    waterHeatCapacity: Number(document.getElementById("s_waterHeatCapacity").value) || 0,
+    boilerEfficiency: Number(document.getElementById("s_boilerEfficiency").value) || 0,
+    steamLatentHeat: Number(document.getElementById("s_steamLatentHeat").value) || 0,
+    electricityEmissionFactor: Number(document.getElementById("s_electricityEmissionFactor").value) || 0,
+    waterInOutTime: Number(document.getElementById("s_waterInOutTime").value) || 0,
+    temperatureMaintainFactor: Number(document.getElementById("s_temperatureMaintainFactor").value) || 0,
+    heatLossFactor: Number(document.getElementById("s_heatLossFactor").value) || 0,
+    residualWaterFactor: Number(document.getElementById("s_residualWaterFactor").value) || 0
+  };
+}
+function applySettingsToForm(settings){
+  document.getElementById("s_waterHeatCapacity").value = settings.waterHeatCapacity;
+  document.getElementById("s_boilerEfficiency").value = settings.boilerEfficiency;
+  document.getElementById("s_steamLatentHeat").value = settings.steamLatentHeat;
+  document.getElementById("s_electricityEmissionFactor").value = settings.electricityEmissionFactor;
+  document.getElementById("s_waterInOutTime").value = settings.waterInOutTime;
+  document.getElementById("s_temperatureMaintainFactor").value = settings.temperatureMaintainFactor;
+  document.getElementById("s_heatLossFactor").value = settings.heatLossFactor;
+  document.getElementById("s_residualWaterFactor").value = settings.residualWaterFactor;
+}
+document.getElementById("resetSettingsBtn").addEventListener("click", ()=>{
+  applySettingsToForm(DEFAULT_SETTINGS);
+});
+
+const state = { lang:"zh" };
+function T(key){ return TRANSLATIONS[state.lang][key] || key; }
+
+function setLanguage(lang){
+  state.lang = lang;
+  document.getElementById("langBtnZh").classList.toggle("active", lang==="zh");
+  document.getElementById("langBtnEn").classList.toggle("active", lang==="en");
+  applyLanguage();
+}
+function applyLanguage(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    el.textContent = T(el.getAttribute("data-i18n"));
+  });
+  updateSetList();
+  renderProcessList();
+}
+
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ========== 染程設定：製程管理 ==========
+// 每個製程一張卡片，各自獨立的基本資料＋染色階段＋水洗步驟。染色階段數量由「染色模式」決定。
+let processes = [];
+let processIdCounter = 0;
+
+const HEAT_SOURCES = ["coal","heavyOil","naturalGas"];
+
+// ========== 染色/水洗範本：直接搬自浸染試染工具的內建範本庫，數值完全不變 ==========
+const BUILTIN_DYE_TEMPLATES = [
+  { id:"bd_m1", name:"染法一：一般染法", segs:[
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:60, rampMin:25, holdMin:20, drain:false },
+    { targetTemp:60, rampMin:0,  holdMin:45, drain:true }
+  ]},
+  { id:"bd_m2", name:"染法二：快速恆溫法（紗線/易染織物）", segs:[
+    { targetTemp:60, rampMin:0, holdMin:10, drain:false },
+    { targetTemp:60, rampMin:0, holdMin:10, drain:false },
+    { targetTemp:60, rampMin:0, holdMin:10, drain:false },
+    { targetTemp:60, rampMin:0, holdMin:15, drain:false },
+    { targetTemp:60, rampMin:0, holdMin:30, drain:false },
+    { targetTemp:60, rampMin:0, holdMin:45, drain:true }
+  ]},
+  { id:"bd_m3", name:"染法三：高溫移染法（Viscose/Tencel/Modal/厚重織物）", segs:[
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:80, rampMin:20, holdMin:20, drain:false },
+    { targetTemp:60, rampMin:10, holdMin:30, drain:false },
+    { targetTemp:60, rampMin:0,  holdMin:45, drain:true }
+  ]},
+  { id:"bd_m4", name:"染法四：預加鹼法", segs:[
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:60, rampMin:15, holdMin:30, drain:false },
+    { targetTemp:60, rampMin:0,  holdMin:45, drain:true }
+  ]},
+  { id:"bd_m5", name:"染法五：Turquoise Blue G 專用染法", segs:[
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:80, rampMin:15, holdMin:15, drain:false },
+    { targetTemp:90, rampMin:15, holdMin:20, drain:false },
+    { targetTemp:90, rampMin:0,  holdMin:30, drain:false },
+    { targetTemp:90, rampMin:0,  holdMin:45, drain:true }
+  ]},
+  { id:"bd_nylon6", name:"尼龍6 繩狀/經軸/筒子紗染色（A-13）", segs:[
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:98, rampMin:58, holdMin:30, drain:true }
+  ]},
+  { id:"bd_nylon66", name:"尼龍6,6 繩狀/經軸/筒子紗染色（A-13）", segs:[
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:115, rampMin:75, holdMin:30, drain:true }
+  ]}
+];
+const BUILTIN_WASH_TEMPLATES = [
+  { id:"bw_a4", name:"標準水洗（A-4，7道）", segs:[
+    { targetTemp:40, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:40, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:65, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:90, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:98, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:65, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:40, rampMin:0, holdMin:10, drain:true }
+  ]},
+  { id:"bw_mt", name:"MT 中溫洗淨（5道）", segs:[
+    { targetTemp:50, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:0, holdMin:10, drain:true }
+  ]},
+  { id:"bw_mts", name:"MTS 中溫皂洗（5道）", segs:[
+    { targetTemp:50, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:0, holdMin:10, drain:true }
+  ]},
+  { id:"bw_ht", name:"HT 高溫皂洗（6道）", segs:[
+    { targetTemp:50, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:60, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:80, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:98, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:80, rampMin:0, holdMin:10, drain:true },
+    { targetTemp:60, rampMin:0, holdMin:10, drain:true }
+  ]}
+];
+
+function createProcess(){
+  processIdCounter++;
+  return {
+    id: processIdCounter,
+    name: (state.lang==="en" ? "Process " : "製程 ") + processes.length,
+    fabricWeight: 100,
+    bathRatio: 10,
+    initialTemp: 30,
+    machinePower: 12,
+    heatSource: "heavyOil",
+    dyeingStages: [{ targetTemp:60, rampMin:15, holdMin:60, drain:false }],
+    washSteps: [{ targetTemp:60, rampMin:15, holdMin:10 }]
+  };
+}
+
+function addProcess(){
+  const p = createProcess();
+  p.name = (state.lang==="en" ? "Process " : "製程 ") + (processes.length + 1);
+  processes.push(p);
+  renderProcessList();
+}
+function deleteProcess(id){
+  processes = processes.filter(p => p.id !== id);
+  renderProcessList();
+}
+function findProcess(id){
+  return processes.find(p => p.id === id);
+}
+
+function heatSourceLabel(key){
+  const labels = {
+    zh:{coal:"煤",heavyOil:"重油",naturalGas:"天然氣"},
+    en:{coal:"Coal",heavyOil:"Heavy Oil",naturalGas:"Natural Gas"}
+  };
+  return labels[state.lang][key];
+}
+
+function renderProcessList(){
+  const list = document.getElementById("processList");
+  list.innerHTML = processes.map(p => renderProcessCardHTML(p)).join("");
+  processes.forEach(p => wireProcessCard(p));
+}
+
+function renderProcessCardHTML(p){
+  return `
+    <div class="process-card" data-id="${p.id}">
+      <div class="process-card-header open" data-toggle-id="${p.id}">
+        <span class="process-card-chevron open">▾</span>
+        <input type="text" class="process-name-input" data-id="${p.id}" value="${escapeHtmlE(p.name)}">
+        <button type="button" class="process-card-delete" data-del-id="${p.id}">✕</button>
+      </div>
+      <div class="process-card-body" data-body-id="${p.id}" style="display:block;">
+        <div class="row2">
+          <div class="field">
+            <label data-i18n="fabricWeightLabel">布重 (kg)</label>
+            <input type="number" class="p-input" data-id="${p.id}" data-field="fabricWeight" value="${p.fabricWeight}" min="0">
+          </div>
+          <div class="field">
+            <label data-i18n="bathRatioLabel">浴比</label>
+            <input type="number" class="p-input" data-id="${p.id}" data-field="bathRatio" value="${p.bathRatio}" min="0">
+          </div>
+          <div class="field">
+            <label data-i18n="initialTempLabel">初溫 (°C)</label>
+            <input type="number" class="p-input" data-id="${p.id}" data-field="initialTemp" value="${p.initialTemp}">
+          </div>
+          <div class="field">
+            <label data-i18n="machinePowerLabel">機台功率 (kW)</label>
+            <input type="number" class="p-input" data-id="${p.id}" data-field="machinePower" value="${p.machinePower}" min="0">
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="heatSourceLabel">熱源</label>
+          <select class="p-input" data-id="${p.id}" data-field="heatSource">
+            ${HEAT_SOURCES.map(hs=>`<option value="${hs}" ${p.heatSource===hs?"selected":""}>${heatSourceLabel(hs)}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="grp-title" data-i18n="dyeingStagesTitle">染色階段</div>
+        <div class="field" style="margin-bottom:10px;">
+          <select class="dye-template-select" data-tplproc-id="${p.id}">
+            <option value="">${state.lang==="en"?"-- Select a template --":"-- 選擇範本 --"}</option>
+            ${BUILTIN_DYE_TEMPLATES.map(t=>`<option value="${t.id}">${escapeHtmlE(t.name)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="dyeing-stage-rows" data-rows-id="${p.id}">
+          ${p.dyeingStages.map((s,i)=>renderDyeingStageRowHTML(p.id,i,s)).join("")}
+        </div>
+        <button type="button" class="add-row-btn" data-adddye-id="${p.id}" data-i18n="addDyeStageBtn">＋ 新增染色階段</button>
+
+        <div class="grp-title" data-i18n="washStepsTitle">水洗步驟</div>
+        <div class="field" style="margin-bottom:10px;">
+          <select class="wash-template-select" data-tplproc-id="${p.id}">
+            <option value="">${state.lang==="en"?"-- Select a template --":"-- 選擇範本 --"}</option>
+            ${BUILTIN_WASH_TEMPLATES.map(t=>`<option value="${t.id}">${escapeHtmlE(t.name)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="wash-stage-rows" data-washrows-id="${p.id}">
+          ${p.washSteps.map((s,i)=>renderWashStepRowHTML(p.id,i,s)).join("")}
+        </div>
+        <button type="button" class="add-row-btn" data-addwash-id="${p.id}" data-i18n="addWashBtn">＋ 新增水洗</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderDyeingStageRowHTML(pid, idx, s){
+  return `
+    <div class="stage-row">
+      <div class="stage-row-top">
+        <span style="font-weight:700;font-size:.85rem;">${state.lang==="en"?"Stage":"階段"} ${idx+1}</span>
+        <button type="button" class="stage-row-del" data-deldye-pid="${pid}" data-deldye-idx="${idx}">✕</button>
+      </div>
+      <div class="stage-row-grid">
+        <div><label data-i18n="targetTempLabel">目標溫度(°C)</label><input type="number" class="dstage-input" data-pid="${pid}" data-idx="${idx}" data-field="targetTemp" value="${s.targetTemp}"></div>
+        <div><label data-i18n="rampMinLabel">爬升(分)</label><input type="number" class="dstage-input" data-pid="${pid}" data-idx="${idx}" data-field="rampMin" value="${s.rampMin}" min="0"></div>
+        <div><label data-i18n="holdMinLabel">保溫(分)</label><input type="number" class="dstage-input" data-pid="${pid}" data-idx="${idx}" data-field="holdMin" value="${s.holdMin}" min="0"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.82rem;color:var(--ink-soft);cursor:pointer;">
+        <input type="checkbox" class="dstage-input" data-pid="${pid}" data-idx="${idx}" data-field="drain" ${s.drain?"checked":""} style="width:auto;">
+        <span data-i18n="drainLabel">排液（下一階段視為重新加水到初溫）</span>
+      </label>
+    </div>
+  `;
+}
+
+function renderWashStepRowHTML(pid, idx, s){
+  return `
+    <div class="stage-row">
+      <div class="stage-row-top">
+        <span style="font-weight:700;font-size:.85rem;">${state.lang==="en"?"Wash":"水洗"} ${idx+1}</span>
+        <button type="button" class="stage-row-del" data-delwash-pid="${pid}" data-delwash-idx="${idx}">✕</button>
+      </div>
+      <div class="stage-row-grid">
+        <div><label data-i18n="targetTempLabel">目標溫度(°C)</label><input type="number" class="wstage-input" data-pid="${pid}" data-idx="${idx}" data-field="targetTemp" value="${s.targetTemp}"></div>
+        <div><label data-i18n="rampMinLabel">爬升(分)</label><input type="number" class="wstage-input" data-pid="${pid}" data-idx="${idx}" data-field="rampMin" value="${s.rampMin}" min="0"></div>
+        <div><label data-i18n="holdMinLabel">保溫(分)</label><input type="number" class="wstage-input" data-pid="${pid}" data-idx="${idx}" data-field="holdMin" value="${s.holdMin}" min="0"></div>
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtmlE(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function wireProcessCard(p){
+  const header = document.querySelector(`.process-card-header[data-toggle-id="${p.id}"]`);
+  header.addEventListener("click", (e)=>{
+    if(e.target.tagName === "INPUT" || e.target.closest("button")) return;
+    const body = document.querySelector(`.process-card-body[data-body-id="${p.id}"]`);
+    const willOpen = body.style.display === "none";
+    body.style.display = willOpen ? "block" : "none";
+    header.classList.toggle("open", willOpen);
+  });
+
+  document.querySelector(`.process-name-input[data-id="${p.id}"]`).addEventListener("input", (e)=>{
+    p.name = e.target.value;
+  });
+  document.querySelector(`.process-card-delete[data-del-id="${p.id}"]`).addEventListener("click", (e)=>{
+    e.stopPropagation();
+    deleteProcess(p.id);
+  });
+
+  document.querySelectorAll(`.p-input[data-id="${p.id}"]`).forEach(input=>{
+    input.addEventListener("input", ()=>{
+      const field = input.dataset.field;
+      p[field] = input.type === "number" ? Number(input.value) || 0 : input.value;
+    });
+  });
+
+  wireDyeingStageInputs(p);
+  wireWashStepInputs(p);
+
+  document.querySelector(`[data-adddye-id="${p.id}"]`).addEventListener("click", ()=>{
+    p.dyeingStages.push({ targetTemp:60, rampMin:15, holdMin:30, drain:false });
+    const rowsEl = document.querySelector(`.dyeing-stage-rows[data-rows-id="${p.id}"]`);
+    rowsEl.innerHTML = p.dyeingStages.map((s,i)=>renderDyeingStageRowHTML(p.id,i,s)).join("");
+    wireDyeingStageInputs(p);
+  });
+
+  document.querySelector(`[data-addwash-id="${p.id}"]`).addEventListener("click", ()=>{
+    p.washSteps.push({ targetTemp:60, rampMin:15, holdMin:10 });
+    const rowsEl = document.querySelector(`.wash-stage-rows[data-washrows-id="${p.id}"]`);
+    rowsEl.innerHTML = p.washSteps.map((s,i)=>renderWashStepRowHTML(p.id,i,s)).join("");
+    wireWashStepInputs(p);
+  });
+
+  document.querySelector(`.dye-template-select[data-tplproc-id="${p.id}"]`).addEventListener("change", (e)=>{
+    const tpl = BUILTIN_DYE_TEMPLATES.find(t=>t.id===e.target.value);
+    if(!tpl) return;
+    p.dyeingStages = tpl.segs.map(s=>({ targetTemp:s.targetTemp, rampMin:s.rampMin, holdMin:s.holdMin, drain:!!s.drain }));
+    const rowsEl = document.querySelector(`.dyeing-stage-rows[data-rows-id="${p.id}"]`);
+    rowsEl.innerHTML = p.dyeingStages.map((s,i)=>renderDyeingStageRowHTML(p.id,i,s)).join("");
+    wireDyeingStageInputs(p);
+  });
+
+  document.querySelector(`.wash-template-select[data-tplproc-id="${p.id}"]`).addEventListener("change", (e)=>{
+    const tpl = BUILTIN_WASH_TEMPLATES.find(t=>t.id===e.target.value);
+    if(!tpl) return;
+    p.washSteps = tpl.segs.map(s=>({ targetTemp:s.targetTemp, rampMin:s.rampMin, holdMin:s.holdMin }));
+    const rowsEl = document.querySelector(`.wash-stage-rows[data-washrows-id="${p.id}"]`);
+    rowsEl.innerHTML = p.washSteps.map((s,i)=>renderWashStepRowHTML(p.id,i,s)).join("");
+    wireWashStepInputs(p);
+  });
+}
+
+function wireDyeingStageInputs(p){
+  document.querySelectorAll(`.dstage-input[data-pid="${p.id}"]`).forEach(input=>{
+    const evt = input.type === "checkbox" ? "change" : "input";
+    input.addEventListener(evt, ()=>{
+      const idx = Number(input.dataset.idx);
+      const field = input.dataset.field;
+      p.dyeingStages[idx][field] = input.type === "checkbox" ? input.checked : (Number(input.value) || 0);
+    });
+  });
+  document.querySelectorAll(`.stage-row-del[data-deldye-pid="${p.id}"]`).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      if(p.dyeingStages.length <= 1) return; // 至少保留一段染色階段
+      const idx = Number(btn.dataset.deldyeIdx);
+      p.dyeingStages.splice(idx, 1);
+      const rowsEl = document.querySelector(`.dyeing-stage-rows[data-rows-id="${p.id}"]`);
+      rowsEl.innerHTML = p.dyeingStages.map((s,i)=>renderDyeingStageRowHTML(p.id,i,s)).join("");
+      wireDyeingStageInputs(p);
+    });
+  });
+}
+function wireWashStepInputs(p){
+  document.querySelectorAll(`.wstage-input[data-pid="${p.id}"]`).forEach(input=>{
+    input.addEventListener("input", ()=>{
+      const idx = Number(input.dataset.idx);
+      const field = input.dataset.field;
+      p.washSteps[idx][field] = Number(input.value) || 0;
+    });
+  });
+  document.querySelectorAll(`.stage-row-del[data-delwash-pid="${p.id}"]`).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const idx = Number(btn.dataset.delwashIdx);
+      p.washSteps.splice(idx, 1);
+      const rowsEl = document.querySelector(`.wash-stage-rows[data-washrows-id="${p.id}"]`);
+      rowsEl.innerHTML = p.washSteps.map((s,i)=>renderWashStepRowHTML(p.id,i,s)).join("");
+      wireWashStepInputs(p);
+    });
+  });
+}
+
+document.getElementById("addProcessBtn").addEventListener("click", addProcess);
+document.getElementById("clearProcessBtn").addEventListener("click", ()=>{
+  const msg = state.lang==="en" ? "Clear all processes and start fresh? This cannot be undone." : "確定要清空所有製程、重新開始嗎？此動作無法復原。";
+  if(!confirm(msg)) return;
+  processes = [];
+  processIdCounter = 0;
+  localStorage.removeItem("dyeEnergy_autosave");
+  addProcess();
+  document.getElementById("resultsOutput").innerHTML = "";
+});
+addProcess(); // 預設先給一個製程
+
+// ========== 載入/存檔/分享：邏輯比照浸染試染工具與CPB ==========
+const SAVED_SETS_KEY = "dyeEnergy_savedSets";
+let loadedSetName = "";
+
+function getSavedSets(){
+  try{
+    return JSON.parse(localStorage.getItem(SAVED_SETS_KEY) || "{}");
+  }catch(err){
+    console.error("Failed to read saved sets:", err);
+    alert(state.lang==="en"
+      ? "Unable to read saved sets. This browser/mode may be restricting local storage."
+      : "無法讀取已儲存的製程組。此瀏覽器/模式可能限制了本機儲存功能。");
+    return null;
+  }
+}
+function setSavedSets(sets){
+  try{
+    localStorage.setItem(SAVED_SETS_KEY, JSON.stringify(sets));
+    return true;
+  }catch(err){
+    console.error("Failed to save sets:", err);
+    alert(state.lang==="en"
+      ? "Save failed. Storage may be restricted or full."
+      : "儲存失敗：此瀏覽器/模式可能限制了本機儲存功能，或儲存空間已滿。");
+    return false;
+  }
+}
+
+function collectAllData(){
+  return { processes: processes, settings: getSettings() };
+}
+function applyAllData(data){
+  processes = data.processes || [];
+  if(processes.length === 0) processes.push(createProcess());
+  applySettingsToForm(data.settings || DEFAULT_SETTINGS);
+  renderProcessList();
+  document.getElementById("resultsOutput").innerHTML = "";
+}
+
+function saveProcessSet(){
+  const typedName = document.getElementById("setNameInput").value.trim();
+  const setName = typedName || loadedSetName;
+  if(!setName){
+    alert(state.lang==="en" ? "Please enter a name." : "請輸入製程組名稱。");
+    return;
+  }
+  const existing = getSavedSets();
+  if(existing === null) return;
+  if(existing[setName]){
+    const msg = state.lang==="en" ? `A set named "${setName}" already exists. Overwrite it?` : `已存在同名製程組「${setName}」，是否要覆蓋？`;
+    if(!confirm(msg)) return;
+  }
+  existing[setName] = collectAllData();
+  if(!setSavedSets(existing)) return;
+  updateSetList();
+  document.getElementById("savedSetsSel").value = setName;
+  loadedSetName = setName;
+  const input = document.getElementById("setNameInput");
+  input.value = "";
+  input.placeholder = state.lang==="en" ? `Loaded: ${setName} (blank = overwrite)` : `目前載入：${setName}（留空即覆蓋）`;
+  alert(state.lang==="en" ? "Saved!" : "儲存成功！");
+}
+
+function loadProcessSet(){
+  const sel = document.getElementById("savedSetsSel");
+  const name = sel.value;
+  if(!name) return;
+  const sets = getSavedSets();
+  if(sets === null) return;
+  const data = sets[name];
+  if(!data){
+    alert(state.lang==="en" ? "Set not found." : "找不到製程組。");
+    return;
+  }
+  applyAllData(data);
+  loadedSetName = name;
+  const input = document.getElementById("setNameInput");
+  input.value = "";
+  input.placeholder = state.lang==="en" ? `Loaded: ${name} (blank = overwrite)` : `目前載入：${name}（留空即覆蓋）`;
+  alert(state.lang==="en" ? "Loaded!" : "載入成功！");
+}
+
+function deleteProcessSet(){
+  const sel = document.getElementById("savedSetsSel");
+  const name = sel.value;
+  if(!name){
+    alert(state.lang==="en" ? "Please select one to delete." : "請選擇要刪除的製程組。");
+    return;
+  }
+  const msg = state.lang==="en" ? `Delete "${name}"?` : `確定要刪除「${name}」嗎？`;
+  if(!confirm(msg)) return;
+  const sets = getSavedSets();
+  if(sets === null) return;
+  delete sets[name];
+  if(!setSavedSets(sets)) return;
+  updateSetList();
+  alert(state.lang==="en" ? "Deleted." : "刪除成功！");
+}
+
+function updateSetList(){
+  const sets = getSavedSets();
+  const sel = document.getElementById("savedSetsSel");
+  const current = sel.value;
+  sel.innerHTML = `<option value="">${T("selectSetOpt")}</option>`;
+  if(sets){
+    Object.keys(sets).sort().forEach(name=>{
+      const opt = document.createElement("option");
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  }
+  sel.value = current;
+}
+updateSetList();
+
+async function shareToolUrl(){
+  const url = window.location.href;
+  const btn = document.getElementById("shareBtn");
+  const original = btn.innerHTML;
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(url);
+    }else{
+      const ta = document.createElement("textarea");
+      ta.value = url; ta.style.position="fixed"; ta.style.opacity="0";
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    btn.textContent = state.lang==="en" ? "Copied!" : "已複製！";
+    setTimeout(()=>{ btn.innerHTML = original; }, 2000);
+  }catch(err){
+    console.error("Copy failed:", err);
+    alert(state.lang==="en" ? "Copy failed — please copy the URL from the address bar manually." : "複製失敗，請手動複製網址列的網址。");
+  }
+}
+
+
+// ========== 計算結果：逐行對照原本工具的公式搬過來，數字邏輯完全不變 ==========
+// 原本用「染色模式」(twoStageTwoBaths等) 決定要不要重新加水/補時間，
+// 這裡改成看「排液」勾選框：某階段勾了排液，下一階段就視為重新加水到初溫，
+// 效果上等同原本的 twoStageTwoBaths 邏輯，只是不綁死在單一模式、可以逐階段自由控制
+const HEAT_SOURCE_DATA = {
+  coal: { heatValue: 29307, emissionFactor: 2.86 },
+  heavyOil: { heatValue: 40194, emissionFactor: 3.15 },
+  naturalGas: { heatValue: 38931, emissionFactor: 2.03 }
+};
+
+function calcHeatEnergy(waterAmount, initialTemp, targetTemp, processTime, settings){
+  const heatingEnergy = waterAmount * settings.waterHeatCapacity * (targetTemp - initialTemp);
+  const maintainEnergy = waterAmount * settings.waterHeatCapacity * settings.temperatureMaintainFactor * processTime;
+  return heatingEnergy + maintainEnergy;
+}
+
+function calculateEmissions(process, settings){
+  const waterAmountForEnergyCalc = process.fabricWeight * process.bathRatio;
+  const dyeingWaterAmount = waterAmountForEnergyCalc;
+  const residualWater = process.fabricWeight * settings.residualWaterFactor;
+  const waterTopUpPerWash = Math.max(0, dyeingWaterAmount - residualWater);
+
+  const drainCount = process.dyeingStages.filter(s => s.drain).length;
+
+  // 總用水量：起始一次浴液量 + 每次水洗補水(扣掉殘留水量) + 每個排液的染色階段各補一次浴液
+  let totalWaterAmount = dyeingWaterAmount;
+  totalWaterAmount += waterTopUpPerWash * process.washSteps.length;
+  totalWaterAmount += waterTopUpPerWash * drainCount;
+
+  // 染色階段能耗與時間
+  let dyeingEnergy = 0, dyeingTime = 0;
+  process.dyeingStages.forEach((stage, index)=>{
+    const prevDrained = index > 0 && process.dyeingStages[index-1].drain;
+    const stageInitialTemp = (index === 0 || prevDrained) ? process.initialTemp : process.dyeingStages[index-1].targetTemp;
+    const tempChangeTime = stage.rampMin; // 直接用分鐘數，不用速率反推
+    dyeingEnergy += calcHeatEnergy(waterAmountForEnergyCalc, stageInitialTemp, stage.targetTemp, stage.holdMin, settings);
+    dyeingTime += stage.holdMin + tempChangeTime;
+  });
+  dyeingTime += drainCount * settings.waterInOutTime; // 每次排液重新加水，各加一次進出水時間
+
+  // 水洗能耗與時間
+  let washingEnergy = 0, washingTime = 0;
+  process.washSteps.forEach(step=>{
+    washingEnergy += calcHeatEnergy(waterAmountForEnergyCalc, process.initialTemp, step.targetTemp, step.holdMin, settings);
+    washingTime += step.holdMin + step.rampMin;
+  });
+
+  const totalThermalEnergy = (dyeingEnergy + washingEnergy) / (1 - settings.heatLossFactor) / 3600;
+  const totalTime = dyeingTime + washingTime + (process.washSteps.length + 1) * settings.waterInOutTime;
+  const electricityConsumption = (process.machinePower * totalTime) / 60;
+  const steamConsumption = totalThermalEnergy * 3600 / (settings.steamLatentHeat * settings.boilerEfficiency);
+
+  const { heatValue, emissionFactor } = HEAT_SOURCE_DATA[process.heatSource];
+  const fuelConsumption = (steamConsumption * settings.steamLatentHeat) / (heatValue * settings.boilerEfficiency);
+  const heatSourceCarbonEmissions = fuelConsumption * emissionFactor;
+  const electricityCarbonEmissions = electricityConsumption * settings.electricityEmissionFactor;
+  const totalCarbonEmissions = heatSourceCarbonEmissions + electricityCarbonEmissions;
+
+  const perKg = (val) => val / process.fabricWeight;
+
+  return {
+    name: process.name, fabricWeight: process.fabricWeight,
+    totalWaterAmount, waterConsumptionPerKg: perKg(totalWaterAmount),
+    totalThermalEnergy, thermalEnergyPerKg: perKg(totalThermalEnergy),
+    electricityConsumption, electricityConsumptionPerKg: perKg(electricityConsumption),
+    steamConsumption, steamConsumptionPerKg: perKg(steamConsumption),
+    totalCarbonEmissions, carbonEmissionsPerKg: perKg(totalCarbonEmissions),
+    totalTime,
+    chartData: generateChartPoints(process, settings, drainCount)
+  };
+}
+
+// 產生溫度-時間曲線的座標點，分段方式跟浸染試染工具的染程曲線一樣：
+// 排液會斷開曲線（中間空一小段代表排液+重新加水），不排液就接續前一階段溫度繼續畫
+function generateChartPoints(process, settings, drainCount){
+  let pointGroups = [];
+  let drainMarkers = []; // 排液點座標，圖表上用箭頭標示
+  let currentGroup = [];
+  let t = settings.waterInOutTime;
+
+  process.dyeingStages.forEach((stage, index)=>{
+    const prevDrained = index > 0 && process.dyeingStages[index-1].drain;
+    const stageInitialTemp = (index === 0 || prevDrained) ? process.initialTemp : process.dyeingStages[index-1].targetTemp;
+    if(index === 0 || prevDrained){
+      if(currentGroup.length) pointGroups.push(currentGroup);
+      currentGroup = [{ t, temp: stageInitialTemp }];
+    }
+    t += stage.rampMin;
+    currentGroup.push({ t, temp: stage.targetTemp });
+    t += stage.holdMin;
+    currentGroup.push({ t, temp: stage.targetTemp });
+    if(stage.drain){
+      drainMarkers.push({ t, temp: stage.targetTemp });
+      t += settings.waterInOutTime;
+    }
+  });
+  if(currentGroup.length) pointGroups.push(currentGroup);
+
+  // 水洗步驟：每段都視為排液重新加水，各自從初溫開始，接續累加時間軸
+  process.washSteps.forEach(step=>{
+    t += settings.waterInOutTime;
+    const group = [{ t, temp: process.initialTemp }];
+    t += step.rampMin;
+    group.push({ t, temp: step.targetTemp });
+    t += step.holdMin;
+    group.push({ t, temp: step.targetTemp });
+    pointGroups.push(group);
+    drainMarkers.push({ t, temp: step.targetTemp });
+  });
+
+  return { pointGroups, drainMarkers };
+}
+
+// ========== 計算結果：數字卡片 + 多製程溫度-時間比較圖 ==========
+const CHART_COLORS = ["#C4384F","#2563EB","#1F8A7A","#D97B2B","#7C3AED","#0EA5E9"];
+
+function numFmt(val, digits){
+  if(!isFinite(val)) return "–";
+  return val.toLocaleString(undefined, { minimumFractionDigits:digits, maximumFractionDigits:digits });
+}
+
+function runCalculation(){
+  const settings = getSettings();
+  const results = processes.map(p => calculateEmissions(p, settings));
+  renderResultsOutput(results);
+}
+
+function renderResultsOutput(results){
+  const container = document.getElementById("resultsOutput");
+  if(results.length === 0){
+    container.innerHTML = `<div class="card"><p class="sub" style="margin:0;">${state.lang==="en"?"No processes yet — add one in the Process tab.":"還沒有製程資料，請先到「染程設定」新增製程。"}</p></div>`;
+    return;
+  }
+
+  const compareHtml = results.length >= 2 ? `
+    <div class="card">
+      <h2 data-i18n="waterCompareTitle">用水量比較（每公斤）</h2>
+      <div id="waterBarWrap"></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="energyCompareTitle">能耗與CO₂比較（每公斤）</h2>
+      <div id="energyBarWrap"></div>
+    </div>
+  ` : "";
+
+  container.innerHTML = compareHtml + `<div class="results-grid">${results.map((r,i)=>`
+    <div class="card result-card" style="border-top:4px solid ${CHART_COLORS[i % CHART_COLORS.length]};">
+      <h2>${escapeHtmlE(r.name)}</h2>
+      <div class="single-chart-wrap" data-chart-idx="${i}"></div>
+      <table class="result-data-table">
+        <thead>
+          <tr><th></th><th data-i18n="totalConsumptionCol">總消耗量</th><th data-i18n="perKgCol">每公斤消耗量</th></tr>
+        </thead>
+        <tbody>
+          <tr><td data-i18n="waterResultLabel">總用水量</td><td><span class="rdv">${numFmt(r.totalWaterAmount,1)}</span><span class="rdu"> L</span></td><td><span class="rdv">${numFmt(r.waterConsumptionPerKg,2)}</span><span class="rdu"> L/kg</span></td></tr>
+          <tr><td data-i18n="thermalResultLabel">總熱能</td><td><span class="rdv">${numFmt(r.totalThermalEnergy,2)}</span><span class="rdu"> kWh</span></td><td><span class="rdv">${numFmt(r.thermalEnergyPerKg,3)}</span><span class="rdu"> kWh/kg</span></td></tr>
+          <tr><td data-i18n="electricityResultLabel">電力消耗</td><td><span class="rdv">${numFmt(r.electricityConsumption,2)}</span><span class="rdu"> kWh</span></td><td><span class="rdv">${numFmt(r.electricityConsumptionPerKg,3)}</span><span class="rdu"> kWh/kg</span></td></tr>
+          <tr><td data-i18n="steamResultLabel">蒸汽消耗</td><td><span class="rdv">${numFmt(r.steamConsumption,1)}</span><span class="rdu"> kg</span></td><td><span class="rdv">${numFmt(r.steamConsumptionPerKg,3)}</span><span class="rdu"> kg/kg</span></td></tr>
+          <tr><td data-i18n="carbonResultLabel">CO₂排放</td><td><span class="rdv">${numFmt(r.totalCarbonEmissions,2)}</span><span class="rdu"> kg</span></td><td><span class="rdv">${numFmt(r.carbonEmissionsPerKg,3)}</span><span class="rdu"> kg/kg</span></td></tr>
+          <tr><td data-i18n="timeResultLabel">總製程時間</td><td colspan="2"><span class="rdv">${numFmt(r.totalTime,0)}</span><span class="rdu"> ${state.lang==="en"?"min":"分鐘"}</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  `).join("")}</div>`;
+
+  if(results.length >= 2){
+    document.getElementById("waterBarWrap").innerHTML = renderGroupedBarSVG(
+      [{ label: state.lang==="en"?"Water (L/kg)":"用水量 (L/kg)", values: results.map(r=>r.waterConsumptionPerKg) }],
+      results.map(r=>r.name)
+    );
+    document.getElementById("energyBarWrap").innerHTML = renderGroupedBarSVG(
+      [
+        { label: state.lang==="en"?"Thermal (kWh/kg)":"熱能 (kWh/kg)", values: results.map(r=>r.thermalEnergyPerKg) },
+        { label: state.lang==="en"?"Electricity (kWh/kg)":"電力 (kWh/kg)", values: results.map(r=>r.electricityConsumptionPerKg) },
+        { label: state.lang==="en"?"CO₂ (kg/kg)":"CO₂ (kg/kg)", values: results.map(r=>r.carbonEmissionsPerKg) }
+      ],
+      results.map(r=>r.name)
+    );
+  }
+
+  // 每個製程各自的圖，用自己卡片的實際寬度畫，手機上盡量整條曲線一次顯示、不用橫向捲動
+  results.forEach((r,i)=>{
+    const wrap = document.querySelector(`.single-chart-wrap[data-chart-idx="${i}"]`);
+    wrap.innerHTML = renderSingleChartSVG(r, CHART_COLORS[i % CHART_COLORS.length], wrap.clientWidth || 300);
+  });
+}
+
+// 單一製程的溫度-時間曲線，畫法比照浸染試染工具的染程曲線（斷點=排液）
+// 手機版用較窄的預設尺寸與較精簡的座標刻度，讓整條曲線盡量一次顯示完，不用橫向捲動
+// 分組長條圖：每個「類別」(用水量、或熱能/電力/CO2) 底下並排各製程的長條，方便互相比較
+function renderGroupedBarSVG(categories, processNames){
+  const padL = 44, padR = 12, padT = 10, padB = 34;
+  const legendH = 20;
+  const catW = 90;
+  const plotW = Math.max(220, categories.length * catW);
+  const plotH = 180;
+  const svgW = plotW + padL + padR;
+  const svgH = plotH + padT + padB + legendH;
+
+  const maxVal = Math.max(...categories.flatMap(c=>c.values), 0.001) * 1.15;
+  const yOf = (v) => padT + plotH - (v / maxVal) * plotH;
+  const barGap = 4;
+  const barW = Math.min(28, (catW - 16) / processNames.length - barGap);
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgW} ${svgH}" style="display:block;width:100%;height:auto;font-family:inherit;">`;
+
+  // Y 格線
+  for(let i=0;i<=4;i++){
+    const v = maxVal * i / 4;
+    const y = yOf(v);
+    svg += `<line x1="${padL}" y1="${y}" x2="${padL+plotW}" y2="${y}" stroke="#E1E4E8" stroke-width="1"/>`;
+    svg += `<text x="${padL-6}" y="${y+3}" font-size="9" fill="#5B6B79" text-anchor="end">${numFmt(v,2)}</text>`;
+  }
+
+  categories.forEach((cat, ci)=>{
+    const groupCenterX = padL + ci*catW + catW/2;
+    const groupW = processNames.length * (barW + barGap) - barGap;
+    const groupStartX = groupCenterX - groupW/2;
+    cat.values.forEach((v, pi)=>{
+      const x = groupStartX + pi*(barW+barGap);
+      const y = yOf(v);
+      const h = padT + plotH - y;
+      svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" fill="${CHART_COLORS[pi % CHART_COLORS.length]}" rx="2"/>`;
+    });
+    svg += `<text x="${groupCenterX}" y="${padT+plotH+16}" font-size="9.5" fill="#5B6B79" text-anchor="middle">${escapeHtmlE(cat.label)}</text>`;
+  });
+
+  // 圖例
+  const legendY = padT + plotH + padB - 4;
+  let legendX = padL;
+  processNames.forEach((name, pi)=>{
+    svg += `<rect x="${legendX}" y="${legendY}" width="10" height="10" fill="${CHART_COLORS[pi % CHART_COLORS.length]}" rx="2"/>`;
+    svg += `<text x="${legendX+14}" y="${legendY+9}" font-size="9.5" fill="#5B6B79">${escapeHtmlE(name)}</text>`;
+    legendX += 14 + name.length*7.5 + 16;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderSingleChartSVG(result, color, availableWidth){
+  const isNarrow = availableWidth < 420;
+  const padL = isNarrow ? 32 : 42, padR = 8, padT = 10, padB = 22;
+  const points = result.chartData.pointGroups.flat();
+  const maxTemp = Math.max(100, Math.ceil((Math.max(...points.map(p=>p.temp),0)+5)/10)*10);
+  const minTemp = Math.min(20, Math.floor(Math.min(...points.map(p=>p.temp),20)/10)*10);
+  const maxTime = Math.max(30, Math.ceil(Math.max(...points.map(p=>p.t),0)/10)*10);
+
+  const plotW = Math.max(200, (availableWidth || 300) - padL - padR);
+  const plotH = isNarrow ? 160 : 200;
+  const svgW = plotW + padL + padR;
+  const svgH = plotH + padT + padB;
+
+  const xOf = (t) => padL + (t / maxTime) * plotW;
+  const yOf = (temp) => padT + plotH - ((temp - minTemp) / (maxTemp - minTemp)) * plotH;
+
+  const fontSize = isNarrow ? 8 : 10;
+  const tempStep = isNarrow ? 40 : 20;
+  const timeStep = Math.max(10, Math.round(maxTime / (isNarrow ? 5 : 8) / 10) * 10);
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgW} ${svgH}" style="display:block;width:100%;height:auto;font-family:inherit;margin-bottom:14px;">`;
+
+  for(let temp = minTemp; temp <= maxTemp; temp += tempStep){
+    const y = yOf(temp);
+    svg += `<line x1="${padL}" y1="${y}" x2="${padL+plotW}" y2="${y}" stroke="#E1E4E8" stroke-width="1"/>`;
+    svg += `<text x="${padL-6}" y="${y+3}" font-size="${fontSize}" fill="#5B6B79" text-anchor="end">${temp}°</text>`;
+  }
+  for(let tm = 0; tm <= maxTime; tm += timeStep){
+    const x = xOf(tm);
+    svg += `<text x="${x}" y="${padT+plotH+15}" font-size="${fontSize}" fill="#5B6B79" text-anchor="middle">${tm}'</text>`;
+  }
+
+  result.chartData.pointGroups.forEach(group=>{
+    const pathD = group.map((p,i)=> (i===0?"M":"L") + xOf(p.t).toFixed(1) + "," + yOf(p.temp).toFixed(1)).join(" ");
+    svg += `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2"/>`;
+  });
+
+  // 排液箭頭：在排液點畫一個向下的小箭頭，顏色跟這條製程曲線一致，箭頭起點盡量貼齊線條
+  result.chartData.drainMarkers.forEach(marker=>{
+    const x = xOf(marker.t), y = yOf(marker.temp);
+    const arrowBottom = y + 14;
+    svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${arrowBottom}" stroke="${color}" stroke-width="1.6"/>`;
+    svg += `<path d="M${x-3.5},${arrowBottom-4} L${x},${arrowBottom} L${x+3.5},${arrowBottom-4}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+document.getElementById("calcBtn").addEventListener("click", runCalculation);
+
+// 註冊 Service Worker，讓工具可以離線使用、也能被瀏覽器判定為可安裝的 PWA
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("./sw.js").catch(err=>{
+      console.error("Service worker registration failed:", err);
+    });
+  });
+}
+</script>
+</body>
+</html>

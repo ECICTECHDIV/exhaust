@@ -118,12 +118,12 @@ const BUILTIN_DYE_TEMPLATES = [
     { targetTemp:60, rampMin:0, holdMin:45, drain:true }
   ]},
   { id:"bd_m3", name:"染法三：高溫移染法（Viscose/Tencel/Modal/厚重織物）", segs:[
-    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
-    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
-    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
-    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:false },
     { targetTemp:80, rampMin:20, holdMin:20, drain:false },
-    { targetTemp:60, rampMin:10, holdMin:30, drain:false },
+    { targetTemp:60, rampMin:15, holdMin:30, drain:false },
     { targetTemp:60, rampMin:0,  holdMin:45, drain:true }
   ]},
   { id:"bd_m4", name:"染法四：預加鹼法", segs:[
@@ -137,14 +137,14 @@ const BUILTIN_DYE_TEMPLATES = [
     { targetTemp:60, rampMin:0,  holdMin:45, drain:true }
   ]},
   { id:"bd_m5", name:"染法五：Turquoise Blue G 專用染法", segs:[
-    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
-    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
-    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
-    { targetTemp:30, rampMin:0,  holdMin:10, drain:false },
-    { targetTemp:80, rampMin:15, holdMin:15, drain:false },
-    { targetTemp:90, rampMin:15, holdMin:20, drain:false },
-    { targetTemp:90, rampMin:0,  holdMin:30, drain:false },
-    { targetTemp:90, rampMin:0,  holdMin:45, drain:true }
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:false },
+    { targetTemp:90, rampMin:25, holdMin:20, drain:false },
+    { targetTemp:80, rampMin:8,  holdMin:20, drain:false },
+    { targetTemp:80, rampMin:0,  holdMin:30, drain:false },
+    { targetTemp:80, rampMin:0,  holdMin:45, drain:true }
   ]},
   { id:"bd_nylon6", name:"尼龍6 繩狀/經軸/筒子紗染色（A-13）", segs:[
     { targetTemp:40, rampMin:0,  holdMin:10, drain:false },
@@ -163,35 +163,35 @@ const BUILTIN_DYE_TEMPLATES = [
 /* ---- 內建水洗範本（直接搬自浸染試染工具，數值不變） ---- */
 const BUILTIN_WASH_TEMPLATES = [
   { id:"bw_a4", name:"標準水洗（A-4，7道）", segs:[
-    { targetTemp:40, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:40, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:65, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:90, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:98, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:65, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:40, rampMin:0, holdMin:10, drain:true }
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:true },
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:true },
+    { targetTemp:65, rampMin:8,  holdMin:10, drain:true },
+    { targetTemp:90, rampMin:17, holdMin:10, drain:true },
+    { targetTemp:98, rampMin:19, holdMin:10, drain:true },
+    { targetTemp:65, rampMin:8,  holdMin:10, drain:true },
+    { targetTemp:40, rampMin:0,  holdMin:10, drain:true }
   ]},
   { id:"bw_mt", name:"MT 中溫洗淨（5道）", segs:[
     { targetTemp:50, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:70, rampMin:0, holdMin:10, drain:true }
+    { targetTemp:70, rampMin:7, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:7, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:7, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:7, holdMin:10, drain:true }
   ]},
   { id:"bw_mts", name:"MTS 中溫皂洗（5道）", segs:[
     { targetTemp:50, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:70, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:70, rampMin:0, holdMin:10, drain:true }
+    { targetTemp:70, rampMin:7, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:7, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:7, holdMin:10, drain:true },
+    { targetTemp:70, rampMin:7, holdMin:10, drain:true }
   ]},
   { id:"bw_ht", name:"HT 高溫皂洗（6道）", segs:[
-    { targetTemp:50, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:60, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:80, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:98, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:80, rampMin:0, holdMin:10, drain:true },
-    { targetTemp:60, rampMin:0, holdMin:10, drain:true }
+    { targetTemp:50, rampMin:0,  holdMin:10, drain:true },
+    { targetTemp:60, rampMin:3,  holdMin:10, drain:true },
+    { targetTemp:80, rampMin:10, holdMin:10, drain:true },
+    { targetTemp:98, rampMin:16, holdMin:10, drain:true },
+    { targetTemp:80, rampMin:10, holdMin:10, drain:true },
+    { targetTemp:60, rampMin:3,  holdMin:10, drain:true }
   ]}
 ];
 

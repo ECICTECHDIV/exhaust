@@ -135,11 +135,14 @@
     cursor:pointer;
   }
   .top-bar-label{
-    display:block;
+    display:none;
     font-size:.82rem;
     font-weight:600;
     color:var(--ink-soft);
     margin-bottom:4px;
+  }
+  @media (min-width:640px){
+    .top-bar-label{ display:block; }
   }
   .top-bar-slim{
     padding:1rem 1rem 0;
